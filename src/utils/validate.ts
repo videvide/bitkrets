@@ -4,6 +4,7 @@ import type {
   BlogPostFormData,
   CreateBlogPostFormData,
   EditBlogPostFormData,
+  DeleteBlogPostFormData,
 } from "../types/bitkrets";
 
 export function validateBlogPostFormData(formData: BlogPostFormData) {
@@ -102,6 +103,7 @@ export function validateCreateBlogPostFormData(
   return validBlogTitle && validBlogText && validSubmitType;
 }
 
+// validateEditBlogPostFormData
 export function validateEditBlogPostFormData(
   editBlogPostFormData: EditBlogPostFormData
 ) {
@@ -119,4 +121,19 @@ export function validateEditBlogPostFormData(
   );
 
   return validBlogId && validBlogTitle && validBlogText && validSubmitType;
+}
+
+// validateDeleteBlogPostFormData
+export function validateDeleteBlogPostFormData(
+  deleteBlogPostFormData: DeleteBlogPostFormData
+) {
+  // validate blogId
+  const validBlogId = validateBlogId(deleteBlogPostFormData.blogId);
+  // validate submit type
+  const validSubmitType = validateSubmitType(
+    deleteBlogPostFormData.submitType,
+    blogPostFormSubmitType.delete
+  );
+
+  return validBlogId && validSubmitType;
 }

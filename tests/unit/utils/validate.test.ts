@@ -4,6 +4,7 @@ import {
   validateBlogPostFormData,
   validateBlogTitleLength,
   validateCreateBlogPostFormData,
+  validateDeleteBlogPostFormData,
   validateEditBlogPostFormData,
   validateEmailAddressStructure,
   validatePasswordStrength,
@@ -14,6 +15,7 @@ import {
 } from "../../../src/constants";
 import type {
   CreateBlogPostFormData,
+  DeleteBlogPostFormData,
   EditBlogPostFormData,
 } from "../../../src/types/bitkrets";
 
@@ -189,3 +191,23 @@ test("test validateEditBlogPostFormData", () => {
   // test valid EditBlogPostFormData
   expect(validateEditBlogPostFormData(validEditBlogPostFormData)).toBe(true);
 });
+
+// invalid DeleteBlogPostFormData
+const invalidDeleteBlogPostFormData: DeleteBlogPostFormData = {
+  blogId: "asd",
+  submitType: blogPostFormSubmitType.delete
+}
+
+// valid DeleteBlogPostFormData
+const validDeleteBlogPostFormData: DeleteBlogPostFormData = {
+  blogId: "123",
+  submitType: blogPostFormSubmitType.delete
+}
+
+// test validateDeleteBlogPostFormData
+test("test validateDeleteBlogPostFormData", () => {
+  // test invalid DeleteBlogPostFormData
+  expect(validateDeleteBlogPostFormData(invalidDeleteBlogPostFormData)).toBe(false);
+  // test valid DeleteBlogPostFormData
+  expect(validateDeleteBlogPostFormData(validDeleteBlogPostFormData)).toBe(true);
+})
