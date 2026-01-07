@@ -1,117 +1,60 @@
-import * as mongoDB from "mongodb";
 // https://typegoose.github.io/mongodb-memory-server/docs/guides/quick-start-guide
 import { MongoMemoryServer } from "mongodb-memory-server";
-import type { BlogPost, User } from "../types/bitkrets";
+import mongoose, { Schema, type InferSchemaType } from "mongoose";
+import { blogTitleLength } from "../constants";
 
-// not so useful info: https://www.mongodb.com/resources/products/compatibilities/using-typescript-with-mongodb-tutorial#adding-schema-validation-with-the-mongodb-nodejs-driver
+export const blogPostSchema = new Schema({
+  blogTitle: {
+    type: String,
+    required: true,
+    min: blogTitleLength.minLength,
+    max: blogTitleLength.maxLength,
+  },
+  blogText: { type: String, required: true },
+});
+
+export type BlogPostType = InferSchemaType<typeof blogPostSchema>;
 
 export const collections: {
-  // https://www.mongodb.com/docs/drivers/node/current/typescript/#working-with-the-_id-field
-  blogPosts?: mongoDB.Collection<mongoDB.OptionalId<BlogPost>>;
-  users?: mongoDB.Collection<mongoDB.OptionalId<User>>;
+  blogPosts?: mongoose.Model<BlogPostType>;
 } = {};
 
-// class that connects to db and load collections
-// allows manual close specifically for test runs
-// we later switch to use this in our server code as well
-// for now it is only for testing
 export class DatabaseConnection {
-  static isTesting: boolean;
+  static testing: boolean;
   static connectionString: string;
-  // testing database deamon
-  static mongod: MongoMemoryServer;
-  // production database client
-  static client: mongoDB.MongoClient;
-  // testing and production database instance
-  static db: mongoDB.Db;
+  static memoryServer: MongoMemoryServer;
+  static connection: mongoose.Connection;
+  static posts: mongoose.Model<BlogPostType>;
 
-  // collections:
-  static posts: mongoDB.Collection<mongoDB.OptionalId<BlogPost>>;
-  static users: mongoDB.Collection<mongoDB.OptionalId<User>>;
+  static async connect(testing: boolean, connectionString?: string) {
+    this.testing = testing;
+    console.log(`Connecting to ${testing ? "test" : "prod"} db...`);
 
-  static async connect(isTesting: boolean, connectionString?: string) {
-    // function to connect to the database
-    // check if testing (no need to provide connection string, testing deamon provides one)
-    this.isTesting = isTesting;
-
-    console.log(
-      `Connecting to database with ${
-        isTesting ? "testing" : "production"
-      } connectionString...`
-    );
-
-    if (!isTesting && connectionString) {
-      // if not testing, assign provided connections string
-      this.connectionString = connectionString;
-    } else if (isTesting) {
-      // else start testing deamon 
-      const mongod = await MongoMemoryServer.create({
+    if (testing) {
+      const memoryServer = await MongoMemoryServer.create({
         instance: {
           dbName: "bitkrets",
         },
       });
-      // assign the testing database deamon to allow manual closing
-      this.mongod = mongod;
-      // assign the testing deamon provided connection string
-      this.connectionString = mongod.getUri();
+      this.memoryServer = memoryServer;
+      this.connectionString = memoryServer.getUri();
+    } else if (connectionString) {
+      this.connectionString = connectionString;
     }
 
-    // create a mongodb client
-    this.client = new mongoDB.MongoClient(this.connectionString);
-    // assign the db instance
-    this.db = this.client.db("bitkrets");
+    this.connection = await mongoose.createConnection(this.connectionString).asPromise();
 
-    // assign db collections
-    this.posts = this.db.collection<mongoDB.OptionalId<BlogPost>>("posts");
-    this.users = this.db.collection<mongoDB.OptionalId<User>>("users");
+    this.posts = this.connection.model("Posts", blogPostSchema);
 
-    console.log(
-      `Successfully connected to ${
-        isTesting ? "testing" : "production"
-      } database!`
-    );
+    console.log(`Connected to ${testing ? "test" : "prod"} db!`);
   }
 
   static async close() {
-    // function to manually close the database connection
     console.log("Closing database connection...");
-    if (!this.isTesting) {
-      // if not testing, close production database
-      await this.client.close();
-    } else {
-      // else, close testing database 
-      await this.mongod.stop();
+    if (this.testing) {
+      await this.memoryServer.stop();
     }
-    console.log(
-      `Successfully closed ${
-        this.isTesting ? "testing" : "production"
-      } database connection!`
-    );
+      await this.connection.close();
+    console.log(`Closed ${this.testing ? "test" : "prod"} db!`);
   }
-}
-
-export async function connectToDatabase(isTesting: boolean) {
-  // if test use mongo-memory-server
-  let connectionString;
-  if (isTesting) {
-    const mongod = await MongoMemoryServer.create({
-      instance: {
-        dbName: "bitkrets",
-      },
-    });
-    connectionString = mongod.getUri();
-  } else {
-    connectionString = "mongodb://localhost:27017"; // process.env.MONGODB_CONNECTION_STRING
-  }
-  const client: mongoDB.MongoClient = new mongoDB.MongoClient(connectionString);
-  await client.connect();
-  const db: mongoDB.Db = client.db("bitkrets");
-  const blogCollection = db.collection<mongoDB.OptionalId<BlogPost>>("posts");
-  const userCollection = db.collection<mongoDB.OptionalId<User>>("users");
-
-  collections.blogPosts = blogCollection;
-  collections.users = userCollection;
-  console.log(
-    "succefully connected to database with mongoDB client and app collections..."
-  );
 }

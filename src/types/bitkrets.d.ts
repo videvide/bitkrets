@@ -1,4 +1,5 @@
-import { blogPostFormSubmitType } from "../constants";
+import type { InferSchemaType, Schema, SchemaType } from "mongoose";
+import { blogPostFormSubmitType, blogTitleLength } from "../constants";
 
 export type BlogPostFormSubmitType =
   (typeof blogPostFormSubmitType)[keyof typeof blogPostFormSubmitType];
@@ -10,6 +11,7 @@ export type CreateBlogPostFormData = {
 };
 
 export type EditBlogPostFormData = {
+  // vi ska ändra till det vi får från mongodb
   blogId: string;
   blogTitle: string;
   blogText: string;

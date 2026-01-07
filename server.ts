@@ -6,7 +6,7 @@ import {
   getBlogPost,
   getBlogPosts,
 } from "./src/backend/controllers/dashboardController.js";
-import { connectToDatabase } from "./src/backend/db.js";
+import { DatabaseConnection } from "./src/backend/db.js";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -24,13 +24,17 @@ const __distPath = path.join(path.dirname(__dirname));
 const __distFrontendPath = path.join(__distPath, "frontend");
 
 async function main() {
-  await connectToDatabase(process.env.NODE_ENV === "test");
+  await DatabaseConnection.connect(process.env.NODE_ENV === "test");
 
   const app = express();
   app.use(express.json());
 
   app.get("/posts", getBlogPosts);
   app.get("/blog/:id", getBlogPost);
+  // här vill vi ändra till rest struktur
+  // /delete
+  // /create
+  // osv...
   app.post("/dashboard", dashboard);
 
   let vite;

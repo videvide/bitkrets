@@ -41,8 +41,13 @@ export async function getBlogPosts({
   }
 }
 
+// vi ska ändra och skriva egna routes per action 
+// vi vill köra try catch här ute... 
+// ...
+
 export async function dashboard(req: Request, res: Response) {
   const formData: BlogPostFormData = req.body;
+  // detta vill vi flyttta in i underfunktioner 
   if (!validateBlogPostFormData(formData)) {
     return res.status(400).send("Invalid form data!");
   }
@@ -54,6 +59,7 @@ export async function dashboard(req: Request, res: Response) {
     } catch (error) {
       return res.send("Failed to create blog post");
     }
+    // detta vill vi ändra till vår nya funktion 
   } else if (formData.submitType === blogPostFormSubmitType.edit) {
     try {
       const filter = { _id: new ObjectId(formData.blogId) };
